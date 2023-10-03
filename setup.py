@@ -2,8 +2,9 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="src",
+    name="models",
     packages=find_packages(),
+    py_modules=['greyboxmodel'],
     version="1.0.0",
     description="A Python package for Grey Box Modelling",
     author="Carlos Alejandro Perez Garcia",
