@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Data for test
-data/
+# data/
