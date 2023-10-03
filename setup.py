@@ -7,7 +7,7 @@ setup(
     packages=['greyboxmodel'],
     dependencies=[
         'numpy','pandas','scipy','statsmodels','sklearn'
-    ]
+    ],
     version="1.0.0",
     description="A Python package for Grey Box Modelling",
     author="Carlos Alejandro Perez Garcia",
