@@ -21,12 +21,373 @@ import lmfit
 
 from greyboxmodel.base_model import GreyModel, GreyModelResult
 
+class TiTeThRia(GreyModel):
+    """A DarkGrey Model representing a Ti-Te-Th-Ria RC-equivalent circuit
+
+    ### Assign internal temperature as the measured variable to be fitted to the model
+    y = df['Internal Temperature [˚C]'].values
+
+    inputs = {
+        'Ph': df['Heater Power Output [kW]'].values,
+        'Ta': df['Outside Air Temperature [˚C]'].values,
+        'Th': df['Heating Circuit Temperature [˚C]'].values,
+    }
+
+    ### Parameters to be fitted
+    'value' - Initial Value
+    'min' & 'max' - Bounds
+    'vary' - True or False. If false, the parameter will be fixed to its initial value
+    params = {
+        'Ti0': {'value': y[0], 'vary': False, 'min': 15, 'max': 25},
+        'Te0': {'value': y[0] - 2, 'vary': True, 'min': 10, 'max': 25},
+        'Th0': {'value': y[0], 'vary': False, 'min': 10, 'max': 80},
+        'Ci': {'value': 132},
+        'Ce': {'value': 600},
+        'Ch' : {'value': 2.55, 'vary': False},
+        'Rie': {'value': 0.1},
+        'Rea': {'value': 1},
+        'Ria': {'value': 2},
+        'Rih': {'value': 0.65, 'vary': False}
+    }
+
+    ### Fit using the Nelder-Mead method
+    model = TiTeThRia(params, rec_duration=1).fit(input, y, method='nelder')
+    """
+
+    def model(self, params, input) -> GreyModelResult:
+        """ The system of differential equations describing the model
+
+        Parameters
+        ----------
+        params : lmfit.Parameters
+            - 'Ti0': Initial Internal Temperature at t(0)
+            - 'Te0': Thermal Envelope Temperature at t(0)
+            - 'Th0': Initial Heating Circuit Temperature at t(0)
+            - 'Rih': Thermal Resistance between Internal and Heating Circuit
+            - 'Rie': Thermal Resistance between Internal and Thermal Envelope
+            - 'Rea': Thermal Resistance between Thermal Envelope and Ambient
+            - 'Ria': Thermal Resistance between Internal and Ambient
+            - 'Ci' : Thermal Capacitance of Internal
+            - 'Ch' : Thermal Capacitance of Heating Circuit
+            - 'Ce' : Thermal Capacitance of Thermal Envelope
+
+        input : Dict
+            - 'Ta': Outside Air Temperature
+            - 'Ph': Heater Power Output
+
+        Returns
+        -------
+        Ti : np.ndarray
+            Fitted Internal Temperature
+        Te : np.ndarray
+            Fitted Thermal Envelope Temperature
+        Th : np.ndarray
+            Fitted Heating Circuit Temperature
+        """
+
+        num_rec = len(input['Ta'])
+
+        Ti = np.zeros(num_rec)
+        Te = np.zeros(num_rec)
+        Th = np.zeros(num_rec)
+
+        # Alias these params/X so that the differential equations look pretty
+        Ti[0] = params['Ti0']
+        Te[0] = params['Te0']
+        Th[0] = params['Th0']
+
+        Rie = params['Rie'].value
+        Rea = params['Rea'].value
+        Rih = params['Rih'].value
+        Ria = params['Ria'].value
+
+        Ci = params['Ci'].value
+        Ce = params['Ce'].value
+        Ch = params['Ch'].value
+
+        Ta = input['Ta']
+        Ph = input['Ph']
+
+        # Step through the rest of the time points
+        for i in range(1, num_rec):
+            # dTi = ((Ta[i - 1] - Ti[i - 1]) / (Ria * Ci) + (Te[i - 1] - Ti[i - 1]) / (Rih * Ci) + (Ph[i - 1]) / (Ci)) * self.rec_duration
+            dTi = ((Te[i - 1] - Ti[i - 1]) / (Rie * Ci) + (Th[i - 1] - Ti[i - 1]) / (Rih * Ci) + (Ta[i - 1] - Ti[i - 1]) / (Ria * Ci)) * self.rec_duration
+            Ti[i] = Ti[i - 1] + dTi
+
+            # dTe = ((Ta[i - 1] - Te[i - 1]) / (Rea * Ce) + (Ti[i - 1] - Te[i - 1]) / (Rie * Ce)) * self.rec_duration
+            dTe = ((Ti[i - 1] - Te[i - 1]) / (Rie * Ce) + (Ta[i - 1] - Te[i - 1]) / (Rea * Ce)) * self.rec_duration
+            Te[i] = Te[i - 1] + dTe
+
+            dTh = ((Ti[i - 1] - Th[i - 1]) / (Rih * Ch) + (Ph[i-1]) / (Ch)) * self.rec_duration
+            Th[i] = Th[i - 1] + dTh
+
+        # return super().model(params, input)
+        return GreyModelResult(Ti, input, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
+
+class TiTeTh(GreyModel):
+    """A DarkGrey Model representing a Ti-Te-Th RC-equivalent circuit
+
+    # Assign internal temperature as the measured variable to be fitted to the model
+    y = df['Internal Temperature [˚C]'].values
+
+    inputs = {
+        'Ph': df['Heater Power Output [kW]'].values,
+        'Ta': df['Outside Air Temperature [˚C]'].values,
+        'Th': df['Heating Circuit Temperature [˚C]'].values,
+    }
+
+    # Parameters to be fitted
+    'value' - Initial Value
+    'min' & 'max' - Bounds
+    'vary' - True or False. If false, the parameter will be fixed to its initial value
+    params = {
+        'Ti0': {'value': y[0], 'vary': False, 'min': 15, 'max': 25},
+        'Te0': {'value': y[0] - 2, 'vary': True, 'min': 10, 'max': 25},
+        'Th0': {'value': y[0], 'vary': False, 'min': 10, 'max': 80},
+        'Ci': {'value': 132},
+        'Ce': {'value': 600},
+        'Ch': {'value': 2.55, 'vary': False},
+        'Rie': {'value': 0.1},
+        'Ria': {'value': 1},
+        'Rih': {'value': 0.65, 'vary': False}
+    }
+
+    # Fit using the Nelder-Mead method
+    model = TiTeTh(params, rec_duration=1).fit(input, y, method='nelder')
+    """
+
+    def model(self, params, input) -> GreyModelResult:
+        """ The system of differential equations describing the model
+
+        Parameters
+        ----------
+        params : lmfit.Parameters
+            - 'Ti0': Initial Internal Temperature at t(0)
+            - 'Te0': Thermal Envelope Temperature at t(0)
+            - 'Th0': Initial Heating Circuit Temperature at t(0)
+            - 'Rih': Thermal Resistance between Internal and Heating Circuit
+            - 'Rie': Thermal Resistance between Internal and Thermal Envelope
+            - 'Rea': Thermal Resistance between Thermal Envelope and Ambient
+            - 'Ci' : Thermal Capacitance of Internal
+            - 'Ch' : Thermal Capacitance of Heating Circuit
+            - 'Ce' : Thermal Capacitance of Thermal Envelope
+
+        input : Dict
+            - 'Ta': Outside Air Temperature
+            - 'Ph': Heater Power Output
+
+        Returns
+        -------
+        Ti : np.ndarray
+            Fitted Internal Temperature
+        Te : np.ndarray
+            Fitted Thermal Envelope Temperature
+        Th : np.ndarray
+            Fitted Heating Circuit Temperature
+        """
+
+        num_rec = len(input['Ta'])
+        Ti = np.zeros(num_rec)
+        Te = np.zeros(num_rec)
+        Th = np.zeros(num_rec)
+
+        # Alias these params/X so that the differential equations look pretty
+        Ti[0] = params['Ti0']
+        Te[0] = params['Te0']
+        Th[0] = params['Th0']
+
+        Rie = params['Rie'].value
+        Rea = params['Rea'].value
+        Rih = params['Rih'].value
+
+        Ci = params['Ci'].value
+        Ce = params['Ce'].value
+        Ch = params['Ch'].value
+
+        Ta = input['Ta']
+        Ph = input['Ph']
+
+        # Step through the rest of the time points
+        for i in range(1, num_rec):
+            # dTi = ((Ta[i - 1] - Ti[i - 1]) / (Rie * Ci) + (Te[i - 1] - Ti[i - 1]) / (Rih * Ci) + (Ph[i - 1]) / (Ci)) * self.rec_duration
+            dTi = ((Te[i - 1] - Ti[i - 1]) / (Rie * Ci) + (Th[i - 1] - Ti[i - 1]) / (Rih * Ci)) * self.rec_duration
+            Ti[i] = Ti[i - 1] + dTi
+
+            # dTe = ((Ta[i - 1] - Te[i - 1]) / (Rea * Ce) + (Ti[i - 1] - Te[i - 1]) / (Rie * Ce)) * self.rec_duration
+            dTe = ((Ti[i - 1] - Te[i - 1]) / (Rie * Ce) + (Ta[i - 1] - Te[i - 1]) / (Rea * Ce)) * self.rec_duration
+            Te[i] = Te[i - 1] + dTe
+
+            dTh = ((Ti[i - 1] - Th[i - 1]) / (Rih * Ch) + (Ph[i-1]) / (Ch)) * self.rec_duration
+            Th[i] = Th[i - 1] + dTh
+
+        # return super().model(params, input)
+        return GreyModelResult(Ti, input, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
+
+class TiTh(GreyModel):
+    """A DarkGrey Model representing a Ti-Th RC-equivalent circuit
+
+    ### Assign internal temperature as the measured variable to be fitted to the model
+    y = df['Internal Temperature [˚C]'].values
+
+    inputs = {
+        'Ph': df['Heater Power Output [kW]'].values,
+        'Ta': df['Outside Air Temperature [˚C]'].values,
+        'Th': df['Heating Circuit Temperature [˚C]'].values,
+    }
+
+    ### Parameters to be fitted
+    'value' - Initial Value
+    'min' & 'max' - Bounds
+    'vary' - True or False. If false, the parameter will be fixed to its initial value
+    params = {
+        'Ti0': {'value': y[0], 'vary': False, 'min': 15, 'max': 25},
+        'Th0': {'value': y[0], 'vary': False, 'min': 10, 'max': 80},
+        'Ci': {'value': 132},
+        'Ch': {'value': 2.55, 'vary': False},
+        'Ria': {'value': 1},
+        'Rih': {'value': 0.65, 'vary': False}
+    }
+
+    ### Fit using the Nelder-Mead method
+    model = TiTh(params, rec_duration=1).fit(input, y, method='nelder')
+    """
+
+    def model(self, params, input):
+        """ The system of differential equations describing the model
+
+        Parameters
+        ----------
+        params : 'lmfit.Parameters'
+            - 'Ti0': Initial Internal Temperature at t(0)
+            - 'Th0': Initial Heating Circuit Temperature at t(0)
+            - 'Ria': Thermal Resistance between Internal and Ambient
+            - 'Rih': Thermal Resistance between Internal and Heating Circuit
+            - 'Ci' : Thermal Capacitance of Internal
+            - 'Ch' : Thermal Capacitance of Heating Circuit
+
+        input : Dict
+            - 'Ta': Outside Air Temperature
+            - 'Ph': Heater Power Output
+
+        Returns
+        -------
+        Ti : np.ndarray
+            Internal Temperature
+        Th : np.ndarray
+            Heating Circuit Temperature
+        """
+
+        num_rec = len(input['Ta'])
+        Ti = np.zeros(num_rec)
+        Th = np.zeros(num_rec)
+
+        # Alias these params/X so that the differential equations look pretty
+        Ti[0] = params['Ti0']
+        Th[0] = params['Th0']
+
+        Ria = params['Ria'].value
+        Rih = params['Rih'].value
+
+        Ci = params['Ci'].value
+        Ch = params['Ch'].value
+
+        Ta = input['Ta']
+        Ph = input['Ph']
+
+        # Step through the rest of the time points
+        for i in range(1, num_rec):
+            dTi = ((Ta[i - 1] - Ti[i - 1]) / (Ria * Ci) + (Th[i - 1] - Ti[i - 1]) / (Rih * Ci)) * self.rec_duration
+            Ti[i] = Ti[i - 1] + dTi
+
+            dTh = ((Ti[i - 1] - Th[i - 1]) / (Rih * Ch) + (Ph[i-1]) / (Ch)) * self.rec_duration
+            Th[i] = Th[i - 1] + dTh
+
+        return GreyModelResult(Ti, input, params, {'Ti': Ti, 'Th': Th})
+
+class TiTe(GreyModel):
+    """ A DarkGrey Model representing a Ti-Te RC-equivalent circuit
+
+    ### Assign internal temperature as the measured variable to be fitted to the model
+    y = df['Internal Temperature [˚C]'].values
+
+    inputs = {
+        'Ph': df['Heater Power Output [kW]'].values,
+        'Ta': df['Outside Air Temperature [˚C]'].values,
+    }
+
+    ### Parameters to be fitted
+    'value' - Initial Value
+    'min' & 'max' - Bounds
+    'vary' - True or False. If false, the parameter will be fixed to its initial value
+    params = {
+        'Ti0': {'value': y[0], 'vary': False, 'min': 15, 'max': 25},
+        'Te0': {'value': y[0] - 2, 'vary': True, 'min': 10, 'max': 25},
+        'Ci': {'value': 132},
+        'Ce': {'value': 600},
+        'Rie': {'value': 0.1},
+        'Rea': {'value': 1},
+    }
+
+    ### Fit using the Nelder-Mead method
+    model = TiTe(params, rec_duration=1).fit(input, y, method='nelder')
+    """
+    def model(self, params, input):
+        """
+        The system of differential equations describing the model
+
+        Parameters
+        ----------
+        params : lmfit.Parameters
+            - 'Ti0': Initial Internal Temperature at t(0)
+            - 'Te0': Thermal Envelope Temperature at t(0)
+            - 'Rie': Thermal Resistance between Internal and Thermal Envelope
+            - 'Rea': Thermal Resistance between Thermal Envelope and Ambient
+            - 'Ci' : Thermal Capacitance of Internal
+            - 'Ce' : Thermal Capacitance of Thermal Envelope
+
+        input : Dict
+            - 'Ta': Outside Air Temperature
+            - 'Ph': Heater Power Output
+
+        Returns
+        -------
+        Ti : np.ndarray
+            Internal Temperature
+        Te : np.ndarray
+            Thermal Envelope Temperature
+        """
+
+        num_rec = len(input['Ta'])
+        Ti = np.zeros(num_rec)
+        Te = np.zeros(num_rec)
+
+        # Alias these params/X so that the differential equations look pretty
+        Ti[0] = params['Ti0']
+        Te[0] = params['Te0']
+
+        Rie = params['Rie'].value
+        Rea = params['Rea'].value
+
+        Ci = params['Ci'].value
+        Ce = params['Ce'].value
+
+        Ta = input['Ta']
+        Ph = input['Ph']
+
+        # Step through the rest of the time points
+        for i in range(1, num_rec):
+            dTi = ((Te[i - 1] - Ti[i - 1]) / (Rie * Ci) + (Ph[i - 1]) / (Ci)) * self.rec_duration
+            Ti[i] = Ti[i - 1] + dTi
+
+            dTe = ((Ta[i - 1] - Te[i - 1]) / (Rea * Ce) + (Ti[i - 1] - Te[i - 1]) / (Rie * Ce)) * self.rec_duration
+            Te[i] = Te[i - 1] + dTe
+
+        return GreyModelResult(Ti, input, params, {'Ti': Ti, 'Te': Te})
+
 class Ti(GreyModel):
     """A DarkGrey Model representing a Ti RC-equivalent circuit
 
-    Notes
-    ----------
-    Assign internal temperature as the measured variable to be fitted to the model
+    ## Assign internal temperature as the measured variable to be fitted to the model
     y = df['Internal Temperature [˚C]'].values
 
     Inputs = {
@@ -34,7 +395,7 @@ class Ti(GreyModel):
         'Ta': df['Outside Air Temperature [˚C]'].values,
     }
 
-    Parameters to be fitted
+    ## Parameters to be fitted
     'value' - Initial Value
     'min' & 'max' - Bounds
     'vary' - True or False. If false, the parameter will be fixed to its initial value
@@ -44,7 +405,7 @@ class Ti(GreyModel):
         'Ria': {'value': 1},
     }
 
-    # Fit using the Nelder-Mead method
+    ## Fit using the Nelder-Mead method
     model = Ti(params, rec_duration=1).fit(X, y, method='nelder')
     """
 
