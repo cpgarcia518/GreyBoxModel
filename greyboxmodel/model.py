@@ -5,7 +5,6 @@
 """Grey Box Mdoel Definition"""
 
 from __future__ import annotations
-from typing import Dict
 
 __author__ = "Carlos Alejandro Perez Garcia"
 __copyright__ = "Copyright 2022"
@@ -16,11 +15,14 @@ __email__ = "cpgarcia518@gmail.com"
 
 # Libraries
 # ==============================================================================
+from typing import Dict
 import numpy as np
 import lmfit
 
 from greyboxmodel.base_model import GreyModel, GreyModelResult
 
+# Classes
+# ==============================================================================
 class TiTeThRia(GreyModel):
     """A DarkGrey Model representing a Ti-Te-Th-Ria RC-equivalent circuit
 
