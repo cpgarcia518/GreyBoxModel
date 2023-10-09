@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from darkgreybox import logger
-from darkgreybox.base_model import DarkGreyModel
+# from darkgreybox import logger
+from greyboxmodel.base_model import DarkGreyModel
 
 
 def train_models(
@@ -52,7 +52,7 @@ def train_models(
         `pd.DataFrame` with a record for each model's result for each split
 
     Example:
-    ~~~~
+    ```python
 
     from sklearn.metrics import mean_squared_error
     from sklearn.model_selection import KFold
@@ -71,10 +71,10 @@ def train_models(
         n_jobs=-1,
         verbose=10
     )
-    ~~~~
+    ```
     """
 
-    logger.info('Training models...')
+    # logger.info('Training models...')
 
     if n_jobs != 1:
         with Parallel(n_jobs=n_jobs, verbose=verbose) as p:

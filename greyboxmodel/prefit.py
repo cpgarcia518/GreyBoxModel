@@ -2,7 +2,7 @@ from typing import Any, Callable, List, Optional, cast
 
 import pandas as pd
 
-from darkgreybox.train import train_models
+from greyboxmodel.train import train_models
 
 
 def prefit_models(

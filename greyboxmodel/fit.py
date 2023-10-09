@@ -2,9 +2,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 
-from darkgreybox.predict import predict_models
-from darkgreybox.prefit import prefit_models
-from darkgreybox.train import train_models
+from greyboxmodel.predict import predict_models
+from greyboxmodel.prefit import prefit_models
+from greyboxmodel.train import train_models
 
 
 def darkgreyfit(
@@ -104,3 +104,6 @@ def darkgreyfit(
     )
 
     return pd.concat([train_df, test_df], keys=["train", "test"], axis=1)
+
+if __name__ == "__main__":
+    pass

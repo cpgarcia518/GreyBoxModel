@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from darkgreybox import logger
-from darkgreybox.base_model import DarkGreyModel, DarkGreyModelResult
+# from darkgreybox import logger
+from greyboxmodel.base_model import DarkGreyModel, DarkGreyModelResult
 
 
 def predict_models(
