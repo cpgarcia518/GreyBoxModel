@@ -1,60 +1,48 @@
-#   ---------------------------------------------------------------------------------
-#   Copyright (c) Microsoft Corporation. All rights reserved.
-#   Licensed under the MIT License. See LICENSE in project root for information.
-#   ---------------------------------------------------------------------------------
-"""
-Training Prohet Model Model
-"""
-
-from __future__ import annotations
-
-__author__ = "Carlos Alejandro Perez Garcia"
-__copyright__ = "Copyright 2023"
-__license__ = "MIT"
-__version__ = "0.1.0"
-__maintainer__ = "Carlos Alejandro Perez Garcia"
-__email__ = "cpgarcia518@gmail.com"
-
-# Libraries
-# ==============================================================================
+from abc import ABC
 from copy import deepcopy
-
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Union
 
 import lmfit
 import numpy as np
 
+# from darkgreybox import logger
+
+
 @dataclass
-class GreyModelResult:
-    '''
+class DarkGreyModelResult:
+    """
     Dataclass that holds the results of the fitting of the model to a data set.
-        yhat: The measured variable's fit / predicted values
-        input: The input values used to fit the model
+        Z: The measured variable's fit / predicted values
+        X: The input values used to fit the model
         var: The variables of the model including internal ones if any
         params: The parameters of the model
-    '''
-    yhat: np.ndarray
-    input: Dict
+    """
+
+    Z: np.ndarray
+    X: Dict
     params: lmfit.Parameters
     var: Dict
 
-class GreyModel:
-    """Abstract Base Class for Grey Model"""
+
+class DarkGreyModel(ABC):
+    """
+    Abstract Base Class for DarkGrey Models
+    """
 
     def __init__(self, params: Union[lmfit.Parameters, Dict], rec_duration: float):
         """
-        Initialize the model with the model function and the parameters
+        Initialises the model instance
 
         Parameters
         ----------
-        params : Union[lmfit.Parameters, Dict]
+        params : dict
             A dictionary of parameters for the fitting. Key - value pairs should follow the
             `lmfit.Parameters` declaration:
             e.g. {'A' : {'value': 10, 'min': 0, 'max': 30}} - sets the initial value and the bounds
             for parameter `A`
         rec_duration : float
-            The duration of the recording in seconds
+            The duration of each measurement record in hours
         """
 
         self.result = lmfit.minimizer.MinimizerResult()
@@ -72,116 +60,104 @@ class GreyModel:
 
     def fit(
         self,
-        input: Dict,
-        yhat: np.ndarray,
-        method: str = "leastsq",
+        X: Dict,
+        y: np.ndarray,
+        method: str,
         ic_params: Optional[Dict] = None,
-        objective_func: Optional[Callable] = None,
+        obj_func: Optional[Callable] = None,
     ):
         """
-        Fit the model by minimising the objective function value
+        Fits the model by minimising the objective function value
 
         Parameters
         ----------
-        input : dict
+        X : dict
             A dictionary of input values for the fitting - these values are fixed during the fit.
-        yhat : np.ndarray
-            The measured variable's values to fit the model to.
-        method : str, optional
-            The method to use for the minimisation, by default "leastsq"
-        ic_params : Optional[Dict], optional
-            Initial conditions for the parameters, by default None
-        objective_func : Optional[Callable], optional
-            The objective function that is passed to `lmfit.minimize`, by default None
+        y : np.array
+            The measured variable's values for the minimiser to fit to
+        method : str
+            Name of the fitting method to use. Valid values are described in:
+            `lmfit.minimize`
+        ic_params : Optional[Dict]
+            The initial condition parameters - if passed in these will overwrite
+            the initial conditions in self.params
+        obj_func : Optional[Callable]
+            The objective function that is passed to `lmfit.minimize`/
+            It must have (params, *args, **kwargs) as its method signature.
+            Default: `def_obj_func`
 
         Returns
         -------
         `lmfit.minimizer.MinimizerResult`
-            Object containing the optimized parameters and several goodness-of-fit statistics.
+            Object containing the optimized parameters and several
+            goodness-of-fit statistics.
         """
 
-        # Overwrite the initial conditions if provided
-        if ic_params:
+        # overwrite initial conditions
+        if ic_params is not None:
             for k, v in ic_params.items():
                 if k in self.params:
                     self.params[k].value = v
                 else:
-                    raise ValueError(f"Parameter {k} not found in model parameters.")
-                    # logger.warning(f'Key `{k}` not found in initial conditions params')
+                    # logger.warning(f"Key `{k}` not found in initial conditions params")
+                    KeyError(f"Key `{k}` not found in initial conditions params")
 
+        # we are passing X, y to minimise as kwargs
         self.result = lmfit.minimize(
-            objective_func or self.objective_func,
+            obj_func or self.def_obj_func,
             self.params,
-            args=(input, yhat),
+            kws={"model": self.model, "X": X, "y": y},
             method=method,
-            kws={'model': self.model, 'input': input, 'yhat': yhat},
         )
 
         self.params = self.result.params
 
         return self
 
-    def predict(self, input: Dict, ic_params: Optional[Dict] = None) -> GreyModelResult:
+    def predict(self, X: Dict, ic_params: Optional[Dict] = None) -> DarkGreyModelResult:
         """
-        Generates a prediction based on the result parameters and input.
+        Generates a prediction based on the result parameters and X.
 
         Parameters
         ----------
-        input : Dict
-            A dictionary of input values for the fitting - these values are fixed during the fit.
-        ic_params : Optional[Dict], optional
-            Initial conditions for the parameters, by default None
+        X : dict
+            A dictionary of input values
+        ic_params : dict
+            The initial condition parameters - if passed in these will overwrite
+            the initial conditions in self.params
+
+        Returns
+        -------
+        The results of the model
         """
 
-        if ic_params:
+        if ic_params is not None:
             for k, v in ic_params.items():
-                if k in self.params:
-                    self.params[k].value = v
-                else:
-                    raise ValueError(f"Parameter {k} not found in model parameters.")
-                    # logger.warning(f'Key `{k}` not found in initial conditions params')
+                self.params[k].value = v
 
-        return self.model(self.params, input)
+        return self.model(self.params, X)
 
-    def model(self, params: lmfit.Parameters, input: Dict) -> GreyModelResult:
+    def model(self, params: lmfit.Parameters, X: Dict) -> DarkGreyModelResult:
         """
-        The model function that is used to generate a prediction.
+        A system of differential equations describing the thermal model
+        """
+        ...  # pragma: no cover
 
-        Parameters
-        ----------
-        params : lmfit.Parameters
-            The parameters of the model
-        input : Dict
-            A dictionary of input values for the fitting - these values are fixed during the fit.
+    def lock(self):
+        """
+        Locks the parameters by setting `vary` to False
         """
 
-        def lock(self):
-            """
-            Lock the parameters of the model
-            """
+        for param in self.params.keys():
+            self.params[param].vary = False
 
-            for param in self.params.keys():
-                self.params[param].vary = False
-
-            return self
-
-        # raise NotImplementedError
+        return self
 
     @staticmethod
-    def objective_func(params: lmfit.Parameters, *args, **kwargs):
+    def def_obj_func(params: lmfit.Parameters, *args, **kwargs):
         """
-        The objective function that is used to fit the model to the data.
-
-        Parameters
-        ----------
-        params : lmfit.Parameters
-            The parameters of the model
-        *args
-            Arguments passed to the objective function
-        **kwargs
-            Keyword arguments passed to the objective function
+        Default objective function
+        Computes the residual between measured data and fitted data
+        The model, X and y are passed in as kwargs by `lmfit.minimize`
         """
-
-        return (kwargs['model'](params=params, input=kwargs['input']).yhat - kwargs['yhat']).ravel()
-
-
+        return ((kwargs["model"](params=params, X=kwargs["X"]).Z - kwargs["y"])).ravel()
