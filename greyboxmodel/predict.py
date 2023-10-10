@@ -65,7 +65,7 @@ def predict_models(
     """
 
     num_models = len(models)
-    logger.info(f'Generating predictions for {num_models} models...')
+    # logger.info(f'Generating predictions for {num_models} models...')
 
     if n_jobs != 1:
         with Parallel(n_jobs=n_jobs, verbose=verbose) as p:
