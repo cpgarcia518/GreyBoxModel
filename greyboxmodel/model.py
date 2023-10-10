@@ -17,10 +17,10 @@ __email__ = "cpgarcia518@gmail.com"
 # ==============================================================================
 import numpy as np
 
-from greyboxmodel.base_model import DarkGreyModel, DarkGreyModelResult
+from greyboxmodel.base_model import GreyModel, GreyModelResult
 
 
-class TiTeThRia(DarkGreyModel):
+class TiTeThRia(GreyModel):
     '''
     A DarkGrey Model representing a TiTeThRia RC-equivalent circuit
 
@@ -132,10 +132,10 @@ class TiTeThRia(DarkGreyModel):
             Te[i] = Te[i-1] + dTe
             Th[i] = Th[i-1] + dTh
 
-        return DarkGreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
+        return GreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
 
 
-class TiTeTh(DarkGreyModel):
+class TiTeTh(GreyModel):
     '''
     A DarkGrey Model representing a TiTeTh RC-equivalent circuit
 
@@ -243,10 +243,10 @@ class TiTeTh(DarkGreyModel):
             Te[i] = Te[i-1] + dTe
             Th[i] = Th[i-1] + dTh
 
-        return DarkGreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
+        return GreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te, 'Th': Th})
 
 
-class TiTh(DarkGreyModel):
+class TiTh(GreyModel):
     '''
     A DarkGrey Model representing a TiTh RC-equivalent circuit
 
@@ -340,10 +340,10 @@ class TiTh(DarkGreyModel):
             Ti[i] = Ti[i-1] + dTi
             Th[i] = Th[i-1] + dTh
 
-        return DarkGreyModelResult(Ti, X, params, {'Ti': Ti, 'Th': Th})
+        return GreyModelResult(Ti, X, params, {'Ti': Ti, 'Th': Th})
 
 
-class TiTe(DarkGreyModel):
+class TiTe(GreyModel):
     '''
     A DarkGrey Model representing a TiTe RC-equivalent circuit
 
@@ -436,10 +436,10 @@ class TiTe(DarkGreyModel):
             Ti[i] = Ti[i-1] + dTi
             Te[i] = Te[i-1] + dTe
 
-        return DarkGreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te})
+        return GreyModelResult(Ti, X, params, {'Ti': Ti, 'Te': Te})
 
 
-class Ti(DarkGreyModel):
+class Ti(GreyModel):
     '''
     A DarkGrey Model representing a Ti RC-equivalent circuit
 
@@ -525,4 +525,4 @@ class Ti(DarkGreyModel):
 
             Ti[i] = Ti[i-1] + dTi
 
-        return DarkGreyModelResult(Ti, X, params, {'Ti': Ti})
+        return GreyModelResult(Ti, X, params, {'Ti': Ti})

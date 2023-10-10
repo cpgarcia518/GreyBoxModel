@@ -29,7 +29,7 @@ import numpy as np
 
 
 @dataclass
-class DarkGreyModelResult:
+class GreyModelResult:
     """
     Dataclass that holds the results of the fitting of the model to a data set.
         Z: The measured variable's fit / predicted values
@@ -44,9 +44,9 @@ class DarkGreyModelResult:
     var: Dict
 
 
-class DarkGreyModel(ABC):
+class GreyModel(ABC):
     """
-    Abstract Base Class for DarkGrey Models
+    Abstract Base Class for Grey Model
     """
 
     def __init__(self, params: Union[lmfit.Parameters, Dict], rec_duration: float):
@@ -133,7 +133,7 @@ class DarkGreyModel(ABC):
 
         return self
 
-    def predict(self, X: Dict, ic_params: Optional[Dict] = None) -> DarkGreyModelResult:
+    def predict(self, X: Dict, ic_params: Optional[Dict] = None) -> GreyModelResult:
         """
         Generates a prediction based on the result parameters and X.
 
@@ -156,7 +156,7 @@ class DarkGreyModel(ABC):
 
         return self.model(self.params, X)
 
-    def model(self, params: lmfit.Parameters, X: Dict) -> DarkGreyModelResult:
+    def model(self, params: lmfit.Parameters, X: Dict) -> GreyModelResult:
         """
         A system of differential equations describing the thermal model
         """
