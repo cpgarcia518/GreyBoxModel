@@ -1,3 +1,20 @@
+#   ---------------------------------------------------------------------------------
+#   Copyright (c) Microsoft Corporation. All rights reserved.
+#   Licensed under the MIT License. See LICENSE in project root for information.
+#   ---------------------------------------------------------------------------------
+""" Train the grey box model """
+
+from __future__ import annotations
+
+__author__ = "Carlos Alejandro Perez Garcia"
+__copyright__ = "Copyright 2023"
+__license__ = "MIT"
+__version__ = "1.0.0"
+__maintainer__ = "Carlos Alejandro Perez Garcia"
+__email__ = "cpgarcia518@gmail.com"
+
+# Standard libraries
+# ==============================================================================
 import copy
 from timeit import default_timer as timer
 from typing import Callable, Dict, List, Optional, cast
@@ -6,12 +23,15 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
+# Own libraries
+# ==============================================================================
 # from darkgreybox import logger
-from greyboxmodel.base_model import DarkGreyModel
+from greyboxmodel.base_model import GreyModel
 
-
+# Functions
 def train_models(
-    models: List[DarkGreyModel],
+    # models: Dict[str, GreyModel],
+    models: List[GreyModel],
     X_train: pd.DataFrame,
     y_train: pd.Series,
     error_metric: Callable,
@@ -26,32 +46,35 @@ def train_models(
     Trains the `models` for the given `X_train` and `y_train` training data
     for `splits` using `method`.
 
-    Params:
-        models: list of `model.DarkGreyModel` objects
-            list of models to be trained
-        X_train: `pandas.DataFrame`
-            A pandas DataFrame of the training input data X
-        y_train: `pandas.Series`
-            A pandas Series of the training input data y
-        error_metric: Callable
-            An error metric function that confirms to the `sklearn.metrics` interface
-        splits: Optional[List]
-            A list of training data indices specifying sub-sections of `X_train` and `y_train`
-            for the models to be trained on
-        method : str
-            Name of the fitting method to use. Valid values are described in:
-            `lmfit.minimize`
-        obj_func: Optional[Callable]
-            The objective function to minimise during the fitting
-        n_jobs: Optional[int]
-            The number of parallel jobs to be run as described by `joblib.Parallel`
-        verbose: Optional[int]
-            The degree of verbosity as described by `joblib.Parallel`
+    Parameters
+    ----------
+    models: list of `model.GreyModel` objects
+        list of models to be trained
+    X_train: `pandas.DataFrame`
+        A pandas DataFrame of the training input data X
+    y_train: `pandas.Series`
+        A pandas Series of the training input data y
+    error_metric: Callable
+        An error metric function that confirms to the `sklearn.metrics` interface
+    splits: Optional[List]
+        A list of training data indices specifying sub-sections of `X_train` and `y_train`
+        for the models to be trained on
+    method : str
+        Name of the fitting method to use. Valid values are described in:
+        `lmfit.minimize`
+    obj_func: Optional[Callable]
+        The objective function to minimise during the fitting
+    n_jobs: Optional[int]
+        The number of parallel jobs to be run as described by `joblib.Parallel`
+    verbose: Optional[int]
+        The degree of verbosity as described by `joblib.Parallel`
 
-    Returns:
-        `pd.DataFrame` with a record for each model's result for each split
+    Returns
+    -------
+    `pd.DataFrame` with a record for each model's result for each split
 
     Example:
+    -------
     ```python
 
     from sklearn.metrics import mean_squared_error
@@ -73,7 +96,7 @@ def train_models(
     )
     ```
     """
-
+    # TODO: Add type hints into __init__ for logger
     # logger.info('Training models...')
 
     if n_jobs != 1:
@@ -100,7 +123,7 @@ def train_models(
 
 
 def train_model(
-    base_model: DarkGreyModel,
+    base_model: GreyModel,
     X_train: pd.DataFrame,
     y_train: pd.Series,
     error_metric: Callable,
@@ -111,23 +134,25 @@ def train_model(
     Trains a copy of `base_model` for the given `X_train` and `y_train` training data
     using `method`.
 
-    Params:
-        base_model: `model.DarkGreyModel`
-            model to be trained (a copy will be made)
-        X_train: `pandas.DataFrame`
-            A pandas DataFrame of the training input data X
-        y_train: `pandas.Series`
-            A pandas Series of the training input data y
-        error_metric: Callable
-            An error metric function that confirms to the `sklearn.metrics` interface
-        method : str
-            Name of the fitting method to use. Valid values are described in:
-            `lmfit.minimize`
-        obj_func: Optional[Callable]
-            The objective function to minimise during the fitting
+    Parameters
+    ----------
+    base_model: `model.GreyModel`
+        model to be trained (a copy will be made)
+    X_train: `pandas.DataFrame`
+        A pandas DataFrame of the training input data X
+    y_train: `pandas.Series`
+        A pandas Series of the training input data y
+    error_metric: Callable
+        An error metric function that confirms to the `sklearn.metrics` interface
+    method : str
+        Name of the fitting method to use. Valid values are described in:
+        `lmfit.minimize`
+    obj_func: Optional[Callable]
+        The objective function to minimise during the fitting
 
-    Returns:
-        `pd.DataFrame` with a single record for the fit model's result
+    Returns
+    -------
+    `pd.DataFrame` with a single record for the fit model's result
     """
 
     start = timer()
@@ -138,11 +163,12 @@ def train_model(
 
     X = X_train.to_dict(orient='list')
     y = cast(np.ndarray, y_train.values)
+    # y = y_train.to_numpy()
 
     try:
         model.fit(
-            X,
-            y,
+            X=X,
+            y=y,
             method=method,
             ic_params=get_ic_params(model, X_train),
             obj_func=obj_func
@@ -174,26 +200,30 @@ def train_model(
     })
 
 
-def get_ic_params(model: DarkGreyModel, X_train: pd.DataFrame) -> Dict:
+def get_ic_params(model: GreyModel, X_train: pd.DataFrame) -> Dict:
     """
-    Returns the initial condition parameters of a model from the training data
+    Get the initial conditions parameters for the model.
 
-    Params:
-        model: `model.DarkGreyModel`
-            model to get initial condition parameters from
-        X_train: `pandas.DataFrame`
-            A pandas DataFrame of the training input data X
+    Parameters
+    ----------
+    model: `model.GreyModel`
+        Model to get initial condition parameters from
+    X_train: `pd.DataFrame`
+        Training data
 
-    Returns:
-        A dictionary containing the initial conditions and their corresponding values
-        as defined by the training data
-
+    Returns
+    -------
+    Dict
+        A dictionary of initial condition parameters.
     """
 
     # TODO: this is horrible - make this clearer and more robust
     ic_params = {}
     for key in model.params:
         if '0' in key:
+            # TODO: This is solution could be better
+            # ic_params[key] = model.params[key].value
+
             if key in X_train:
                 ic_params[key] = X_train.iloc[0][key]
             else:
@@ -203,17 +233,19 @@ def get_ic_params(model: DarkGreyModel, X_train: pd.DataFrame) -> Dict:
 
 
 def reduce_results_df(df: pd.DataFrame, decimals: int = 6) -> pd.DataFrame:
-    """
-    Reduces `df` dataframe by removing nan and duplicate records
+    """Reduce `df` dataframe by removing nan and duplicate records
 
-    Params:
-        df: `pd.DataFrame`
-            The dataframe to be reduced / cleaned
-        decimal: int
-            The number of decimal points for the float comparison when removing duplicates
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe to reduce/clean
+    decimals : int, optional
+        The number of decimal points for the float comparison when removing duplicates, by default 6
 
-    Returns :
-        the reduced / cleaned `pd.DataFrame`
+    Returns
+    -------
+    pd.DataFrame
+        Reduced dataframe
     """
 
     return (
@@ -225,3 +257,6 @@ def reduce_results_df(df: pd.DataFrame, decimals: int = 6) -> pd.DataFrame:
         .sort_values('error')
         .reset_index(drop=True)
     )
+
+if __name__ == "__main__":
+    pass

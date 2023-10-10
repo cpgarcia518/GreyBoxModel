@@ -112,14 +112,15 @@ class GreyModel(ABC):
             goodness-of-fit statistics.
         """
 
-        # overwrite initial conditions
+        # Overwrite the initial conditions if provided
         if ic_params is not None:
             for k, v in ic_params.items():
                 if k in self.params:
                     self.params[k].value = v
                 else:
                     # logger.warning(f"Key `{k}` not found in initial conditions params")
-                    KeyError(f"Key `{k}` not found in initial conditions params")
+                    # KeyError(f"Key `{k}` not found in initial conditions params")
+                    raise ValueError(f"Parameter {k} not found in model parameters.")
 
         # we are passing X, y to minimise as kwargs
         self.result = lmfit.minimize(

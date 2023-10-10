@@ -1,7 +1,25 @@
+#   ---------------------------------------------------------------------------------
+#   Copyright (c) Microsoft Corporation. All rights reserved.
+#   Licensed under the MIT License. See LICENSE in project root for information.
+#   ---------------------------------------------------------------------------------
+""" Train the grey box model """
+
+from __future__ import annotations
+
+__author__ = "Carlos Alejandro Perez Garcia"
+__copyright__ = "Copyright 2023"
+__license__ = "MIT"
+__version__ = "1.0.0"
+__maintainer__ = "Carlos Alejandro Perez Garcia"
+__email__ = "cpgarcia518@gmail.com"
+
+# Standard libraries
+# ==============================================================================
+import pandas as pd
 from typing import Any, Callable, Dict, List, Optional
 
-import pandas as pd
-
+# Own libraries
+# ==============================================================================
 from greyboxmodel.predict import predict_models
 from greyboxmodel.prefit import prefit_models
 from greyboxmodel.train import train_models
@@ -27,56 +45,58 @@ def darkgreyfit(
     Given a list of `models` applies a prefit according to `prefit_splits`, then fits them
     to the training data and evaluates them on the test data.
 
-    Params:
-        models: list of `model.DarkGreyModel` objects
-            list of models to be trained
-        X_train: `pd.DataFrame`
-            A pandas DataFrame of the training input data X
-        y_train: `pd.Series`
-            A pandas Series of the training input data y
-        X_test: `pd.DataFrame`
-            A pandas DataFrame of the test input data X
-        y_test: `pd.Series`
-            A pandas Series of the test input data y
-        ic_params_map: Dict
-            A dictionary of mapping functions that return the
-            initial condition parameters for the test set
-        error_metric: Callable
-            An error metric function that confirms to the `sklearn.metrics` interface
-        prefit_splits: Optional[List]
-            A list of training data indices specifying sub-sections of `X_train` and `y_train`
-            for the prefitting of models
-        prefit_filter: Optional[Callable]
-            A function acting as a filter based on the 'error' values of the trained models
-        reduce_train_results: bool
-            If set to True, the training dataframe will be reduced / cleaned
-            by removing nan and duplicate records
-        method : str
-            Name of the fitting method to use. Valid values are described in:
-            `lmfit.minimize`
-        obj_func: Optional[Callable]
-            The objective function to minimise during the fitting
-        n_jobs: int
-            The number of parallel jobs to be run as described by `joblib.Parallel`
-        verbose: int
-            The degree of verbosity as described by `joblib.Parallel`
+    Parameters
+    ----------
+    models: list of `model.DarkGreyModel` objects
+        list of models to be trained
+    X_train: `pd.DataFrame`
+        A pandas DataFrame of the training input data X
+    y_train: `pd.Series`
+        A pandas Series of the training input data y
+    X_test: `pd.DataFrame`
+        A pandas DataFrame of the test input data X
+    y_test: `pd.Series`
+        A pandas Series of the test input data y
+    ic_params_map: Dict
+        A dictionary of mapping functions that return the
+        initial condition parameters for the test set
+    error_metric: Callable
+        An error metric function that confirms to the `sklearn.metrics` interface
+    prefit_splits: Optional[List]
+        A list of training data indices specifying sub-sections of `X_train` and `y_train`
+        for the prefitting of models
+    prefit_filter: Optional[Callable]
+        A function acting as a filter based on the 'error' values of the trained models
+    reduce_train_results: bool
+        If set to True, the training dataframe will be reduced / cleaned
+        by removing nan and duplicate records
+    method : str
+        Name of the fitting method to use. Valid values are described in:
+        `lmfit.minimize`
+    obj_func: Optional[Callable]
+        The objective function to minimise during the fitting
+    n_jobs: int
+        The number of parallel jobs to be run as described by `joblib.Parallel`
+    verbose: int
+        The degree of verbosity as described by `joblib.Parallel`
 
-    Returns:
-        `pd.DataFrame` with a record for each model's potentially viable results
+    Returns
+    -------
+    `pd.DataFrame` with a record for each model's potentially viable results
 
     """
 
     models_to_train = prefit_models(
-        models,
-        X_train,
-        y_train,
-        error_metric,
-        prefit_splits,
-        prefit_filter,
-        method,
-        obj_func,
-        n_jobs,
-        verbose,
+        models=models,
+        X_train=X_train,
+        y_train=y_train,
+        error_metric=error_metric,
+        prefit_splits=prefit_splits,
+        prefit_filter=prefit_filter,
+        method=method,
+        obj_func=obj_func,
+        n_jobs=n_jobs,
+        verbose=verbose,
     )
 
     train_df = train_models(

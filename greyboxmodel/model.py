@@ -30,7 +30,7 @@ class TiTeThRia(GreyModel):
     Energy and Buildings. 43. 1511-1522. 10.1016/j.enbuild.2011.02.005." for a complete description
     of RC thermal models and the eqiuvalent circuit diagram of TiTeThRia.
 
-    ~~~~
+    ```python
     # load data from e.g. pandas
     df = pd.read_csv()
 
@@ -63,7 +63,7 @@ class TiTeThRia(GreyModel):
 
     # fit using the Nelder-Mead method
     model = TiTeThRia(params, rec_duration=1).fit(X, y, method='nelder')
-    ~~~~
+    ```
     '''
 
     def model(self, params, X):
