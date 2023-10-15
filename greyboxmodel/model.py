@@ -247,7 +247,7 @@ class TiTeTh(GreyModel):
 
 
 class TiTh(GreyModel):
-    '''
+    """
     A DarkGrey Model representing a TiTh RC-equivalent circuit
 
     Notes
@@ -256,7 +256,7 @@ class TiTh(GreyModel):
     Energy and Buildings. 43. 1511-1522. 10.1016/j.enbuild.2011.02.005." for a complete description
     of RC thermal models and the eqiuvalent circuit diagram of TiTh.
 
-    ~~~~
+    ```python
     # load data from e.g. pandas
     df = pd.read_csv()
 
@@ -285,11 +285,11 @@ class TiTh(GreyModel):
 
     # fit using the Nelder-Mead method
     model = TiTh(params, rec_duration=1).fit(X, y, method='nelder')
-    ~~~~
-    '''
+    ```
+    """
 
     def model(self, params, X):
-        '''
+        """
         The system of differential equations describing the model
 
         Parameters
@@ -311,7 +311,7 @@ class TiTh(GreyModel):
             Fitted internal temperature values
         Th : np.array
             Fitted heating system temperature values
-        '''
+        """
 
         num_rec = len(X['Ta'])
 
@@ -344,7 +344,7 @@ class TiTh(GreyModel):
 
 
 class TiTe(GreyModel):
-    '''
+    """
     A DarkGrey Model representing a TiTe RC-equivalent circuit
 
     Notes
@@ -353,7 +353,7 @@ class TiTe(GreyModel):
     Energy and Buildings. 43. 1511-1522. 10.1016/j.enbuild.2011.02.005." for a complete description
     of RC thermal models and the eqiuvalent circuit diagram of TiTeTh.
 
-    ~~~~
+    ```python
     # load data from e.g. pandas
     df = pd.read_csv()
 
@@ -381,11 +381,11 @@ class TiTe(GreyModel):
 
     # fit using the Nelder-Mead method
     model = TiTe(params, rec_duration=1).fit(X, y, method='nelder')
-    ~~~~
-    '''
+    ```
+    """
 
     def model(self, params, X):
-        '''
+        """
         The system of differential equations describing the model
 
         Parameters
@@ -407,7 +407,7 @@ class TiTe(GreyModel):
             Fitted internal temperature values
         Te : np.array
             Fitted thermal envelope temperature values
-        '''
+        """
 
         num_rec = len(X['Ta'])
 
@@ -440,7 +440,7 @@ class TiTe(GreyModel):
 
 
 class Ti(GreyModel):
-    '''
+    """"
     A DarkGrey Model representing a Ti RC-equivalent circuit
 
     Notes
@@ -449,7 +449,7 @@ class Ti(GreyModel):
     Energy and Buildings. 43. 1511-1522. 10.1016/j.enbuild.2011.02.005." for a complete description
     of RC thermal models and the eqiuvalent circuit diagram of Ti.
 
-    ~~~~
+    ```python
     # load data from e.g. pandas
     df = pd.read_csv()
 
@@ -474,8 +474,8 @@ class Ti(GreyModel):
 
     # fit using the Nelder-Mead method
     model = Ti(params, rec_duration=1).fit(X, y, method='nelder')
-    ~~~~
-    '''
+    ```
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -519,8 +519,7 @@ class Ti(GreyModel):
         Ph = X['Ph']
 
         for i in range(1, num_rec):
-
-            # the model equations
+            # Model equations
             dTi = ((Ta[i-1] - Ti[i-1]) / (Ria * Ci) + (Ph[i-1]) / (Ci)) * self.rec_duration
 
             Ti[i] = Ti[i-1] + dTi

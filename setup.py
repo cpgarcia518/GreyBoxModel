@@ -6,7 +6,7 @@ setup(
     # packages=find_packages(),
     packages=['greyboxmodel'],
     dependencies=[
-        'numpy','pandas','scipy','statsmodels','sklearn'
+        'numpy','pandas','scipy','statsmodels','sklearn','lmfit'
     ],
     version="1.0.0",
     description="A Python package for Grey Box Modelling",
